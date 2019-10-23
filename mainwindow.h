@@ -15,7 +15,7 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-    void setDefaultAudioSink(QString defaultAudioSink);
+    static void setDefaultAudioSink();
 
 private slots:
     void on_pushButton_clicked();
@@ -30,6 +30,6 @@ private slots:
 
 private:
     Ui::MainWindow *ui;
-    QString mDefaultAudioSink;
+    static QString mDefaultAudioSink;
 };
 #endif // MAINWINDOW_H

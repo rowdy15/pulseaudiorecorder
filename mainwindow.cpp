@@ -3,12 +3,18 @@
 #include <QProcess>
 #include <QString>
 #include <QDir>
+#include <QDebug>
+#include <QFile>
+#include <QMessageBox>
 //#include <QProcessEnvironment>
 
 #include<QDebug>
 
 static QProcess *process;
 static QString folder;
+static QProcess *defaultAudio;
+
+QString MainWindow::mDefaultAudioSink;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -26,6 +32,8 @@ MainWindow::~MainWindow()
 // disable recording button when pressed so only one process happens at any one time
 void MainWindow::on_pushButton_clicked()
 {
+    MainWindow::setDefaultAudioSink();
+
     ui->errorLabel->setText("");
     QString mp3file = ui->fileNameTextEdit->toPlainText();
 
@@ -53,6 +61,7 @@ void MainWindow::on_pushButton_clicked()
             cmd.append("~/");
         } else{
             cmd.append(folder);
+            cmd.append("/");
         }
 
     }
@@ -107,9 +116,65 @@ void MainWindow::on_plainTextEdit_textChanged()
     folder = ui->plainTextEdit->toPlainText();
 }
 
-void MainWindow::setDefaultAudioSink(QString defaultAudioSink)
+void MainWindow::setDefaultAudioSink()
 {
-    defaultAudioSink =  defaultAudioSink.left(-1);
-    defaultAudioSink =  defaultAudioSink.right(-1);
-    mDefaultAudioSink = defaultAudioSink;
+
+
+    QString audioLogFile = "default-audio-log.txt";
+    QString program = "/bin/sh"; //start a shell
+    QStringList arguments;
+
+    QString getDefaultAudio = "pacmd list-sinks | grep -A1 \"* index:\" | grep \"name\" | awk '{print $2;}'";
+    arguments << "-c";
+    arguments.append(getDefaultAudio);
+
+    defaultAudio = new QProcess;
+
+    defaultAudio->setProgram(program);
+    defaultAudio->setArguments(arguments);
+
+    defaultAudio->setStandardOutputFile(audioLogFile);
+    defaultAudio->setStandardErrorFile("default-audio-error-log.txt");
+
+    defaultAudio->start();
+    defaultAudio->waitForFinished();
+
+
+    //QString defaultAudioSinkErr = defaultAudio->readAllStandardError();
+
+    QString audiologfilePath = QCoreApplication::applicationDirPath() + "/" + audioLogFile;
+
+    QFile file(audiologfilePath);
+
+    if(!file.open(QIODevice::ReadOnly)) {
+        QMessageBox::information(nullptr, "error", file.errorString());
+    }
+
+    QTextStream in(&file);
+
+    while(!in.atEnd()) {
+        QString defaultAudioSink;
+        QString line = in.readLine();
+        //qInfo( "The default audio output is: %s", line.toStdString().c_str() );
+        defaultAudioSink =  line.remove(0,1);
+        defaultAudioSink =  defaultAudioSink.remove(defaultAudioSink.size()-1,1);
+        mDefaultAudioSink = defaultAudioSink;
+    }
+
+    file.close();
+
+
+    //qDebug() << defaultAudioSink;
+    //qInfo( "%s", defaultAudioSink.toStdString().c_str() );
+    //qInfo( "%s", defaultAudioSinkErr.toStdString().c_str() );
+
+    //setDefaultAudioSink(QString defaultAudioSink)
+
+    defaultAudio->terminate();
+
+
+
+    //qInfo( "The default audio output in MainWindow is: %s", defaultAudioSink.toStdString().c_str() );
+
+    //qInfo( "The member default audio output in MainWindow is: %s", mDefaultAudioSink.toStdString().c_str() );
 }
