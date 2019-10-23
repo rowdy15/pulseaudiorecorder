@@ -32,6 +32,7 @@ MainWindow::~MainWindow()
 // disable recording button when pressed so only one process happens at any one time
 void MainWindow::on_pushButton_clicked()
 {
+    ui->pushButton->setDisabled(true);
     MainWindow::setDefaultAudioSink();
 
     ui->errorLabel->setText("");
@@ -66,7 +67,6 @@ void MainWindow::on_pushButton_clicked()
 
     }
 
-
     if(ui->fileNameTextEdit->toPlainText().isNull() || ui->fileNameTextEdit->toPlainText().isEmpty()) {
         cmd.append("audio-stream.mp3");
     } else {
@@ -81,10 +81,6 @@ void MainWindow::on_pushButton_clicked()
 
     //arguments << "-c" << "parecord -d combined.monitor --file-format=oga test.oga";
     process = new QProcess;
-
-//    QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-//    env.insert("TMPDIR", "home/sam/audio"); // Add an environment variable
-//    process->setProcessEnvironment(env);
 
     process->setProgram(program);
     process->setArguments(arguments);
@@ -109,6 +105,8 @@ void MainWindow::on_pushButton_2_clicked()
     system("killall -9 parec");
     process->kill();
     ui->label->setText("You have stopped recording!");
+
+    ui->pushButton->setEnabled(true);
 }
 
 void MainWindow::on_plainTextEdit_textChanged()
@@ -118,8 +116,6 @@ void MainWindow::on_plainTextEdit_textChanged()
 
 void MainWindow::setDefaultAudioSink()
 {
-
-
     QString audioLogFile = "default-audio-log.txt";
     QString program = "/bin/sh"; //start a shell
     QStringList arguments;
@@ -162,19 +158,5 @@ void MainWindow::setDefaultAudioSink()
     }
 
     file.close();
-
-
-    //qDebug() << defaultAudioSink;
-    //qInfo( "%s", defaultAudioSink.toStdString().c_str() );
-    //qInfo( "%s", defaultAudioSinkErr.toStdString().c_str() );
-
-    //setDefaultAudioSink(QString defaultAudioSink)
-
     defaultAudio->terminate();
-
-
-
-    //qInfo( "The default audio output in MainWindow is: %s", defaultAudioSink.toStdString().c_str() );
-
-    //qInfo( "The member default audio output in MainWindow is: %s", mDefaultAudioSink.toStdString().c_str() );
 }
